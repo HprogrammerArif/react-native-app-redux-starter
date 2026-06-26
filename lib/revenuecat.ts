@@ -28,6 +28,28 @@ export async function configureRevenueCat(userId?: string | null): Promise<void>
   // Enable verbose logging in development — shows exactly what RC is doing
   if (__DEV__) {
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    Purchases.setLogHandler((logLevel, message) => {
+      const formattedMessage = `[RevenueCat] ${message}`;
+      if (logLevel === LOG_LEVEL.ERROR) {
+        if (
+          message.includes("Billing service unavailable on device") ||
+          message.includes("Billing is not available in this device") ||
+          message.includes("BILLING_UNAVAILABLE")
+        ) {
+          console.warn(
+            `${formattedMessage}\n(Note: This is expected on emulators/simulators without Google Play Store / Billing services.)`
+          );
+        } else {
+          console.warn(formattedMessage);
+        }
+      } else if (logLevel === LOG_LEVEL.WARN) {
+        console.warn(formattedMessage);
+      } else if (logLevel === LOG_LEVEL.INFO) {
+        console.info(formattedMessage);
+      } else {
+        console.log(formattedMessage);
+      }
+    });
   }
 
   const apiKey = Platform.OS === "ios" ? IOS_KEY : ANDROID_KEY;
