@@ -5,6 +5,10 @@ import Toast from "react-native-toast-message";
 import type { NotificationResponse } from "expo-notifications";
 import "@/global.css";
 
+if (__DEV__) {
+  require("../lib/ReactotronConfig");
+}
+
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import OfflineBanner from "@/components/OfflineBanner";
