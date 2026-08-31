@@ -136,6 +136,10 @@ export default function LoginScreen() {
           </Link>
         </View>
       </View>
+
+      <Link href="/(app)/(tabs)">
+        <Text>home</Text>
+      </Link>
     </Screen>
   );
 }

@@ -12,7 +12,10 @@ import { useTheme } from "@/hooks/use-theme";
  * are pushed on top of it via this Stack.
  */
 export default function AppLayout() {
-  const token = useAppSelector(selectCurrentToken);
+  // const token = useAppSelector(selectCurrentToken);
+
+  const token = true;
+
   const theme = useTheme();
 
   useEffect(() => {
