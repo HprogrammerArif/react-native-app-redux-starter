@@ -1,4 +1,5 @@
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen, Card, EmptyState } from "@/components/ui";
 import { useTheme } from "@/hooks/use-theme";
@@ -7,10 +8,10 @@ import { useAppSelector } from "@/redux/hooks";
 import { selectCurrentUser } from "@/redux/features/auth/authSlice";
 
 const QUICK_ACTIONS = [
-  { icon: "add-circle-outline", label: "New" },
-  { icon: "search-outline", label: "Search" },
-  { icon: "heart-outline", label: "Saved" },
-  { icon: "settings-outline", label: "Settings" },
+  { icon: "add-circle-outline", label: "New", onPress: () => router.push("/new-item") },
+  { icon: "search-outline", label: "Search", onPress: undefined },
+  { icon: "heart-outline", label: "Saved", onPress: undefined },
+  { icon: "settings-outline", label: "Settings", onPress: undefined },
 ] as const;
 
 export default function HomeScreen() {
@@ -63,6 +64,8 @@ export default function HomeScreen() {
               key={action.label}
               style={[styles.actionCard, { backgroundColor: theme.accentMuted }]}
               activeOpacity={0.75}
+              onPress={action.onPress}
+              disabled={!action.onPress}
               accessibilityRole="button"
               accessibilityLabel={action.label}
             >

@@ -15,7 +15,17 @@ interface TextFieldProps extends Omit<TextInputProps, "style"> {
  * Pass `secureTextEntry` to get a built-in show/hide toggle for free.
  */
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
-  { label, error, helperText, secureTextEntry, editable = true, onFocus, onBlur, ...rest },
+  {
+    label,
+    error,
+    helperText,
+    secureTextEntry,
+    editable = true,
+    onFocus,
+    onBlur,
+    multiline,
+    ...rest
+  },
   ref,
 ) {
   const theme = useTheme();
@@ -32,6 +42,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
           ref={ref}
           style={[
             styles.input,
+            multiline && styles.inputMultiline,
             {
               borderColor,
               backgroundColor: editable ? theme.surface : theme.surfaceSecondary,
@@ -42,6 +53,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
           placeholderTextColor={theme.textTertiary}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           editable={editable}
+          multiline={multiline}
+          textAlignVertical={multiline ? "top" : "center"}
           onFocus={(e) => {
             setIsFocused(true);
             onFocus?.(e);
@@ -90,6 +103,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     fontSize: 15,
+  },
+  inputMultiline: {
+    height: undefined,
+    minHeight: 96,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   eyeBtn: {
     position: "absolute",

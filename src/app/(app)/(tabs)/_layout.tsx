@@ -1,7 +1,52 @@
+import { ReactNode } from "react";
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet } from "react-native";
+import {
+  AccessibilityState,
+  GestureResponderEvent,
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { useTheme } from "@/hooks/use-theme";
+
+interface TabBarButtonProps {
+  children?: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onPress?: ((e: GestureResponderEvent) => void) | null;
+  onLongPress?: ((e: GestureResponderEvent) => void) | null;
+  accessibilityState?: AccessibilityState;
+  accessibilityLabel?: string;
+  testID?: string;
+}
+
+// Default tab buttons show an Android ripple / iOS highlight on press. We only want the
+// icon/label color change (handled by TabBarIcon's `focused` state) — no extra press effect.
+function TabBarButton({
+  children,
+  style,
+  onPress,
+  onLongPress,
+  accessibilityState,
+  accessibilityLabel,
+  testID,
+}: TabBarButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityState={accessibilityState}
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
+      style={style}
+      android_ripple={null}
+    >
+      {children}
+    </Pressable>
+  );
+}
 
 /**
  * Tab Navigator — 4 tabs: Home, Explore, Notifications, Profile
@@ -16,6 +61,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
+        tabBarButton: TabBarButton,
         tabBarStyle: [
           styles.tabBar,
           { backgroundColor: theme.surface, borderTopColor: theme.border, shadowColor: theme.text },

@@ -13,7 +13,6 @@ import { useTheme } from "@/hooks/use-theme";
  */
 export default function AppLayout() {
   // const token = useAppSelector(selectCurrentToken);
-
   const token = true;
 
   const theme = useTheme();
@@ -45,6 +44,7 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="edit-profile" options={{ presentation: "modal" }} />
+      <Stack.Screen name="new-item" options={{ presentation: "modal" }} />
     </Stack>
   );
 }
