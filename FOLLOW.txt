@@ -4,6 +4,12 @@ Your package.json setup (Expo SDK 53 + React 19 + React Native 0.79.6) is stable
 "react": "19.0.0",
 "react-native": "0.79.6"
 
+npm install
+npx expo install
+npx expo prebuild --clean
+npm run android
+
+
 
 eas build --platform all
 eas submit -p ios
