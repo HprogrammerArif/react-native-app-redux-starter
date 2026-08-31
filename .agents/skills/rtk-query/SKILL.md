@@ -7,14 +7,14 @@ description: Knows the RTK Query patterns used in this project — how to inject
 
 ## Base API Location
 
-`redux/api/baseApi.ts` — the single RTK Query base API. All feature APIs are injected into it.
+`src/redux/api/baseApi.ts` — the single RTK Query base API. All feature APIs are injected into it.
 
 ## Adding a New Feature API
 
 **NEVER create a new `createApi()` call.** Always inject into `baseApi`:
 
 ```ts
-// redux/features/myFeature/myFeature.api.ts
+// src/redux/features/myFeature/myFeature.api.ts
 import { baseApi } from "@/redux/api/baseApi";
 
 export const myFeatureApi = baseApi.injectEndpoints({
@@ -41,9 +41,9 @@ Add all tag types to `baseApi.ts` `tagTypes` array before using them:
 // In redux/api/baseApi.ts
 tagTypes: [
   "Child",
-  "Items",  // ← add your new tag here
+  "Items", // ← add your new tag here
   // ...
-]
+];
 ```
 
 ## Using Typed Hooks
@@ -64,7 +64,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 ```ts
 // In a mutation endpoint
-invalidatesTags: [{ type: "Items", id: "LIST" }]
+invalidatesTags: [{ type: "Items", id: "LIST" }];
 
 // Manually (from a component)
 dispatch(baseApi.util.invalidateTags(["Items"]));
@@ -83,6 +83,6 @@ Add the endpoint name to the `skipAuth` array in `baseApi.ts`:
 const skipAuth = [
   "login",
   "register",
-  "myPublicEndpoint",  // ← add here
+  "myPublicEndpoint", // ← add here
 ];
 ```

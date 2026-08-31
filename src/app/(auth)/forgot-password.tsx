@@ -1,152 +1,128 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import CustomInput from "@/components/CustomInput";
-import { GradientButton } from "@/components/GradientButton";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Screen, FormField, Button } from "@/components/ui";
+import { useTheme } from "@/hooks/use-theme";
+import { Radius, Spacing, Typography } from "@/constants/theme";
+import { useForgetPasswordMutation } from "@/redux/features/auth/authApi";
+import { forgotPasswordSchema, ForgotPasswordFormValues } from "@/lib/validation/auth";
+import { logger } from "@/lib/logger";
 
 type Step = "input" | "success";
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const theme = useTheme();
+  const [forgetPassword, { isLoading }] = useForgetPasswordMutation();
   const [step, setStep] = useState<Step>("input");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState("");
 
-  const handleSubmit = async () => {
-    if (!email) {
-      return Alert.alert("Error", "Please enter your email address.");
-    }
+  const { control, handleSubmit } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
 
-    setIsLoading(true);
+  const onSubmit = async (values: ForgotPasswordFormValues) => {
+    setFormError(null);
     try {
-      // TODO: Wire up RTK Query
-      // await forgotPassword({ email: email.trim().toLowerCase() }).unwrap();
-
-      await new Promise((r) => setTimeout(r, 800)); // remove when RTK is wired
+      const email = values.email.trim().toLowerCase();
+      await forgetPassword({ email }).unwrap();
+      setSentTo(email);
       setStep("success");
-    } catch (err: any) {
-      Alert.alert("Error", err?.data?.message ?? "Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      logger.error("[ForgotPassword] failed:", err);
+      const message =
+        (err as { data?: { message?: string } })?.data?.message ??
+        "Something went wrong. Please try again.";
+      setFormError(message);
     }
   };
 
   if (step === "success") {
     return (
-      <SafeAreaView style={styles.safe}>
+      <Screen scroll={false}>
         <View style={styles.successContainer}>
-          <View style={styles.successIcon}>
-            <Ionicons name="mail-outline" size={44} color="#2B7FFF" />
+          <View style={[styles.successIcon, { backgroundColor: theme.accentMuted }]}>
+            <Ionicons name="mail-outline" size={44} color={theme.accent} />
           </View>
-          <Text style={styles.successTitle}>Check your inbox</Text>
-          <Text style={styles.successDesc}>
+          <Text style={[Typography.h1, { color: theme.text }]}>Check your inbox</Text>
+          <Text style={[styles.successDesc, { color: theme.textSecondary }]}>
             We sent a password reset link to{"\n"}
-            <Text style={styles.successEmail}>{email}</Text>
+            <Text style={{ color: theme.text, fontWeight: "600" }}>{sentTo}</Text>
           </Text>
-          <GradientButton
-            title="Back to Sign In"
-            onPress={() => router.replace("/(auth)/login")}
-          />
-          <TouchableOpacity
-            style={styles.resendBtn}
-            onPress={() => setStep("input")}
-          >
-            <Text style={styles.resendText}>Didn&apos;t receive it? Try again</Text>
+          <Button title="Back to Sign In" onPress={() => router.replace("/(auth)/login")} />
+          <TouchableOpacity style={styles.resendBtn} onPress={() => setStep("input")}>
+            <Text style={{ color: theme.accent, fontSize: 14, fontWeight: "600" }}>
+              Didn&apos;t receive it? Try again
+            </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <Screen>
+      <TouchableOpacity
+        style={[styles.backBtn, { backgroundColor: theme.surfaceSecondary }]}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
       >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Back */}
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={22} color="#111827" />
-          </TouchableOpacity>
+        <Ionicons name="chevron-back" size={22} color={theme.text} />
+      </TouchableOpacity>
 
-          <Text style={styles.heading}>Forgot Password?</Text>
-          <Text style={styles.sub}>
-            Enter the email associated with your account and we&apos;ll send a reset link.
-          </Text>
+      <Text style={[Typography.h1, styles.heading, { color: theme.text }]}>Forgot Password?</Text>
+      <Text style={[styles.sub, { color: theme.textSecondary }]}>
+        Enter the email associated with your account and we&apos;ll send a reset link.
+      </Text>
 
-          <View style={styles.form}>
-            <CustomInput
-              label="Email"
-              placeholder="you@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-            />
+      <View style={styles.form}>
+        <FormField
+          control={control}
+          name="email"
+          label="Email"
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+        />
 
-            <GradientButton
-              title="Send Reset Link"
-              onPress={handleSubmit}
-              isLoading={isLoading}
-            />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {formError && <Text style={[styles.formError, { color: theme.danger }]}>{formError}</Text>}
+
+        <Button title="Send Reset Link" onPress={handleSubmit(onSubmit)} isLoading={isLoading} />
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  flex: { flex: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
   backBtn: {
     width: 38,
     height: 38,
-    borderRadius: 10,
-    backgroundColor: "#F3F4F6",
+    borderRadius: Radius.sm,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 28,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xxl,
   },
-  heading: { fontSize: 28, fontWeight: "800", color: "#111827", marginBottom: 10, letterSpacing: -0.3 },
-  sub: { fontSize: 15, color: "#6B7280", lineHeight: 22, marginBottom: 28 },
-  form: { gap: 14 },
-  // Success state
-  successContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    gap: 16,
-  },
+  heading: { marginBottom: Spacing.md },
+  sub: { fontSize: 15, lineHeight: 22, marginBottom: Spacing.xxl },
+  form: { gap: Spacing.lg },
+  formError: { fontSize: 13, fontWeight: "600" },
+  successContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.lg },
   successIcon: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    backgroundColor: "#EFF6FF",
+    borderRadius: Radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
-  successTitle: { fontSize: 24, fontWeight: "800", color: "#111827" },
-  successDesc: { fontSize: 15, color: "#6B7280", textAlign: "center", lineHeight: 22 },
-  successEmail: { color: "#111827", fontWeight: "600" },
-  resendBtn: { paddingVertical: 4 },
-  resendText: { color: "#2B7FFF", fontSize: 14, fontWeight: "600" },
+  successDesc: { fontSize: 15, textAlign: "center", lineHeight: 22 },
+  resendBtn: { paddingVertical: Spacing.xs },
 });

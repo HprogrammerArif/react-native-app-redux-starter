@@ -10,8 +10,7 @@ import { Redirect } from "expo-router";
  * The auth guard in (app)/_layout.tsx handles session expiry redirects.
  */
 export default function Index() {
-  // const token = useAppSelector(selectCurrentToken);
-  const token = true;
+  const token = useAppSelector(selectCurrentToken);
 
   if (token) {
     return <Redirect href="/(app)/(tabs)" />;

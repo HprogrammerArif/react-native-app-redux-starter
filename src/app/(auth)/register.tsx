@@ -1,41 +1,36 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { Link, router } from "expo-router";
+// eslint-disable-next-line import/no-named-as-default -- expo-checkbox's default export is intentional
 import Checkbox from "expo-checkbox";
-import CustomInput from "@/components/CustomInput";
-import { GradientButton } from "@/components/GradientButton";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Screen, FormField, Button } from "@/components/ui";
+import { useTheme } from "@/hooks/use-theme";
+import { Spacing, Typography } from "@/constants/theme";
+import { useAppDispatch } from "@/redux/hooks";
+import { useRegisterMutation } from "@/redux/features/auth/authApi";
+import { setCredentials } from "@/redux/features/auth/authSlice";
+import { mapAuthResponse } from "@/redux/features/auth/mapAuthResponse";
+import { PASSWORD_RULES, registerSchema, RegisterFormValues } from "@/lib/validation/auth";
+import { logger } from "@/lib/logger";
 
-// ─── Password strength rules ──────────────────────────────────────────────────
-const PASSWORD_RULES = [
-  { label: "At least 8 characters",         test: (p: string) => p.length >= 8 },
-  { label: "At least one uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
-  { label: "At least one number",           test: (p: string) => /[0-9]/.test(p) },
-  { label: "At least one special character (!@#$%^&*)",
-    test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
-];
+function PasswordRequirements({ password }: { password: string }) {
+  const theme = useTheme();
+  if (!password) return null;
 
-function PasswordRequirements({ password, show }: { password: string; show: boolean }) {
-  if (!show) return null;
   return (
     <View style={styles.pwdRules}>
       {PASSWORD_RULES.map((rule, i) => {
         const ok = rule.test(password);
         return (
           <View key={i} style={styles.pwdRow}>
-            <Text style={[styles.pwdDot, ok && styles.pwdDotOk]}>
+            <Text
+              style={{ fontSize: 13, width: 14, color: ok ? theme.success : theme.textTertiary }}
+            >
               {ok ? "✓" : "○"}
             </Text>
-            <Text style={[styles.pwdRuleText, ok && styles.pwdRuleOk]}>
+            <Text style={{ fontSize: 12, color: ok ? theme.success : theme.textTertiary }}>
               {rule.label}
             </Text>
           </View>
@@ -46,171 +41,161 @@ function PasswordRequirements({ password, show }: { password: string; show: bool
 }
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPwd, setShowPwd] = useState(false);
-  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
-  const [showPwdRules, setShowPwdRules] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const [register, { isLoading }] = useRegisterMutation();
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password));
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      acceptTerms: false,
+    },
+  });
 
-  const handleRegister = async () => {
-    if (!fullName || !email || !password || !confirmPassword) {
-      return Alert.alert("Error", "Please fill in all fields.");
-    }
-    if (!allRulesPassed) {
-      return Alert.alert("Weak Password", "Please meet all password requirements.");
-    }
-    if (password !== confirmPassword) {
-      return Alert.alert("Error", "Passwords do not match.");
-    }
-    if (!acceptTerms) {
-      return Alert.alert("Terms", "Please accept the Terms & Conditions to continue.");
-    }
+  const password = useWatch({ control, name: "password" });
 
-    setIsLoading(true);
+  const onSubmit = async (values: RegisterFormValues) => {
+    setFormError(null);
     try {
-      // TODO: dispatch RTK Query register mutation
-      // const result = await register({ fullName, email, password }).unwrap();
-      // dispatch(setCredentials(result));
+      // Field names here follow this project's REST convention (snake_case) —
+      // adjust to match your backend's actual /auth/register/ contract.
+      const response = await register({
+        full_name: values.fullName.trim(),
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      }).unwrap();
 
-      router.replace("/(app)" as any);
-    } catch (err: any) {
-      Alert.alert("Error", err?.data?.message ?? "Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      dispatch(setCredentials(mapAuthResponse(response)));
+      router.replace("/(app)/(tabs)");
+    } catch (err) {
+      logger.error("[Register] failed:", err);
+      const message =
+        (err as { data?: { message?: string } })?.data?.message ??
+        "Registration failed. Please try again.";
+      setFormError(message);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <Text style={styles.heading}>Create Account</Text>
-          <Text style={styles.sub}>Join us — it only takes a minute</Text>
+    <Screen>
+      <Text style={[Typography.display, styles.heading, { color: theme.text }]}>
+        Create Account
+      </Text>
+      <Text style={[Typography.body, styles.sub, { color: theme.textSecondary }]}>
+        Join us — it only takes a minute
+      </Text>
 
-          {/* Form */}
-          <View style={styles.form}>
-            <CustomInput
-              label="Full Name"
-              placeholder="John Doe"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-              textContentType="name"
-            />
+      <View style={styles.form}>
+        <FormField
+          control={control}
+          name="fullName"
+          label="Full Name"
+          placeholder="John Doe"
+          autoCapitalize="words"
+          textContentType="name"
+        />
 
-            <CustomInput
-              label="Email"
-              placeholder="you@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-            />
+        <FormField
+          control={control}
+          name="email"
+          label="Email"
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+        />
 
-            <CustomInput
-              label="Password"
-              placeholder="Create a strong password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              showEye
-              passwordVisible={showPwd}
-              onTogglePassword={setShowPwd}
-              textContentType="newPassword"
-              onFocus={() => setShowPwdRules(true)}
-            />
-            <PasswordRequirements password={password} show={showPwdRules && password.length > 0} />
+        <FormField
+          control={control}
+          name="password"
+          label="Password"
+          placeholder="Create a strong password"
+          secureTextEntry
+          textContentType="newPassword"
+        />
+        <PasswordRequirements password={password ?? ""} />
 
-            <CustomInput
-              label="Confirm Password"
-              placeholder="Repeat your password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              showEye
-              passwordVisible={showConfirmPwd}
-              onTogglePassword={setShowConfirmPwd}
-              textContentType="newPassword"
-            />
-            {confirmPassword.length > 0 && password !== confirmPassword && (
-              <Text style={styles.mismatch}>Passwords do not match</Text>
-            )}
+        <FormField
+          control={control}
+          name="confirmPassword"
+          label="Confirm Password"
+          placeholder="Repeat your password"
+          secureTextEntry
+          textContentType="newPassword"
+        />
 
-            {/* Terms */}
+        <Controller
+          control={control}
+          name="acceptTerms"
+          render={({ field: { value, onChange } }) => (
             <TouchableOpacity
               style={styles.termsRow}
-              onPress={() => setAcceptTerms(!acceptTerms)}
+              onPress={() => onChange(!value)}
               activeOpacity={0.8}
             >
               <Checkbox
-                value={acceptTerms}
-                onValueChange={setAcceptTerms}
-                color={acceptTerms ? "#2B7FFF" : undefined}
+                value={value}
+                onValueChange={onChange}
+                color={value ? theme.accent : undefined}
                 style={styles.checkbox}
               />
-              <Text style={styles.termsText}>
+              <Text style={{ flex: 1, fontSize: 13, color: theme.textSecondary, lineHeight: 20 }}>
                 I agree to the{" "}
-                <Text style={styles.termsLink}>Terms of Service</Text>
+                <Text style={{ color: theme.accent, fontWeight: "600" }}>Terms of Service</Text>
                 {" & "}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
+                <Text style={{ color: theme.accent, fontWeight: "600" }}>Privacy Policy</Text>
               </Text>
             </TouchableOpacity>
+          )}
+        />
+        {errors.acceptTerms && (
+          <Text style={[styles.formError, { color: theme.danger }]}>
+            {errors.acceptTerms.message}
+          </Text>
+        )}
 
-            <GradientButton
-              title="Create Account"
-              onPress={handleRegister}
-              isLoading={isLoading}
-              disabled={!acceptTerms}
-            />
+        <Button title="Create Account" onPress={handleSubmit(onSubmit)} isLoading={isLoading} />
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Link href="/(auth)/login" asChild>
-                <TouchableOpacity>
-                  <Text style={styles.footerLink}>Sign In</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {formError && <Text style={[styles.formError, { color: theme.danger }]}>{formError}</Text>}
+
+        <View style={styles.footer}>
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+            Already have an account?{" "}
+          </Text>
+          <Link href="/(auth)/login" asChild>
+            <TouchableOpacity>
+              <Text style={{ color: theme.accent, fontWeight: "700", fontSize: 14 }}>Sign In</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  flex: { flex: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40 },
-  heading: { fontSize: 30, fontWeight: "800", color: "#111827", marginBottom: 6, letterSpacing: -0.3 },
-  sub: { fontSize: 15, color: "#6B7280", marginBottom: 28 },
-  form: { gap: 12 },
-  mismatch: { fontSize: 12, color: "#EF4444", marginTop: -6 },
-  pwdRules: { gap: 4, paddingVertical: 6, paddingHorizontal: 2 },
-  pwdRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  pwdDot: { fontSize: 13, color: "#D1D5DB", width: 14 },
-  pwdDotOk: { color: "#10B981" },
-  pwdRuleText: { fontSize: 12, color: "#9CA3AF" },
-  pwdRuleOk: { color: "#10B981" },
-  termsRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 4 },
+  heading: { marginTop: Spacing.xl, marginBottom: Spacing.xs },
+  sub: { marginBottom: Spacing.xxl },
+  form: { gap: Spacing.md },
+  formError: { fontSize: 13, fontWeight: "600" },
+  pwdRules: { gap: Spacing.xs, paddingVertical: Spacing.xs, paddingHorizontal: 2 },
+  pwdRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
+  termsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
   checkbox: { width: 18, height: 18, marginTop: 2 },
-  termsText: { flex: 1, fontSize: 13, color: "#6B7280", lineHeight: 20 },
-  termsLink: { color: "#2B7FFF", fontWeight: "600" },
-  footer: { flexDirection: "row", justifyContent: "center", paddingTop: 4 },
-  footerText: { color: "#6B7280", fontSize: 14 },
-  footerLink: { color: "#2B7FFF", fontWeight: "700", fontSize: 14 },
+  footer: { flexDirection: "row", justifyContent: "center", paddingTop: Spacing.xs },
 });

@@ -715,7 +715,7 @@ const handleApiCall = async () => {
     await analyticsService.logError(
       "api_fetch_failed",
       error.message,
-      false // not fatal
+      false, // not fatal
     );
 
     // Show error to user...

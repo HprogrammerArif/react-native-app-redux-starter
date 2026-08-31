@@ -6,12 +6,13 @@ import {
   StyleSheet,
   useWindowDimensions,
   FlatList,
-  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { GradientButton } from "@/components/GradientButton";
+import { Button } from "@/components/ui";
+import { useTheme } from "@/hooks/use-theme";
+import { Radius, Spacing, Typography } from "@/constants/theme";
 
 // ─── Onboarding data ─────────────────────────────────────────────────────────
 // Replace emoji with actual illustrations / Lottie when you have assets
@@ -20,26 +21,24 @@ const SLIDES = [
     id: "1",
     emoji: "🚀",
     title: "Welcome to the App",
-    description:
-      "Everything you need in one place. Fast, simple, and built for you.",
+    description: "Everything you need in one place. Fast, simple, and built for you.",
   },
   {
     id: "2",
     emoji: "🔒",
     title: "Safe & Secure",
-    description:
-      "Your data is encrypted end-to-end. Privacy is not an afterthought.",
+    description: "Your data is encrypted end-to-end. Privacy is not an afterthought.",
   },
   {
     id: "3",
     emoji: "✨",
     title: "Ready to Start?",
-    description:
-      "Create your account in seconds. No credit card required.",
+    description: "Create your account in seconds. No credit card required.",
   },
 ];
 
 export default function WelcomeScreen() {
+  const theme = useTheme();
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -61,15 +60,13 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Skip */}
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       {!isLast && (
         <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={{ color: theme.textSecondary, fontWeight: "600", fontSize: 15 }}>Skip</Text>
         </TouchableOpacity>
       )}
 
-      {/* Carousel */}
       <FlatList
         ref={flatListRef}
         data={SLIDES}
@@ -80,41 +77,44 @@ export default function WelcomeScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
-            <View style={styles.emojiCircle}>
+            <View style={[styles.emojiCircle, { backgroundColor: theme.accentMuted }]}>
               <Text style={styles.emoji}>{item.emoji}</Text>
             </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
+            <Text style={[Typography.h1, styles.title, { color: theme.text }]}>{item.title}</Text>
+            <Text style={[styles.description, { color: theme.textSecondary }]}>
+              {item.description}
+            </Text>
           </View>
         )}
       />
 
-      {/* Dots */}
       <View style={styles.dotsRow}>
         {SLIDES.map((_, i) => (
           <View
             key={i}
-            style={[styles.dot, i === activeIndex && styles.dotActive]}
+            style={[
+              styles.dot,
+              { backgroundColor: theme.border },
+              i === activeIndex && { width: 24, backgroundColor: theme.accent },
+            ]}
           />
         ))}
       </View>
 
-      {/* Button */}
       <View style={styles.btnWrap}>
-        <GradientButton
+        <Button
           title={isLast ? "Get Started" : "Next"}
           onPress={goToNext}
-          leftIcon={
-            isLast ? undefined : (
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
-            )
-          }
+          leftIcon={isLast ? undefined : <Ionicons name="arrow-forward" size={18} color="#fff" />}
         />
         {isLast && (
-          <TouchableOpacity style={styles.signInLink} onPress={() => router.replace("/(auth)/login")}>
-            <Text style={styles.signInText}>
+          <TouchableOpacity
+            style={styles.signInLink}
+            onPress={() => router.replace("/(auth)/login")}
+          >
+            <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
               Already have an account?{" "}
-              <Text style={styles.signInBold}>Sign In</Text>
+              <Text style={{ color: theme.accent, fontWeight: "700" }}>Sign In</Text>
             </Text>
           </TouchableOpacity>
         )}
@@ -124,60 +124,34 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  skipBtn: { position: "absolute", top: 56, right: 20, zIndex: 10, padding: 8 },
-  skipText: { color: "#6B7280", fontWeight: "600", fontSize: 15 },
+  safe: { flex: 1 },
+  skipBtn: { position: "absolute", top: 56, right: 20, zIndex: 10, padding: Spacing.sm },
   slide: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 36,
-    paddingTop: 40,
+    paddingHorizontal: Spacing.xxxl + 4,
+    paddingTop: Spacing.huge - 8,
   },
   emojiCircle: {
     width: 140,
     height: 140,
-    borderRadius: 70,
-    backgroundColor: "#EFF6FF",
+    borderRadius: Radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 40,
+    marginBottom: Spacing.huge - 8,
   },
   emoji: { fontSize: 64 },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#111827",
-    textAlign: "center",
-    marginBottom: 14,
-    letterSpacing: -0.3,
-  },
-  description: {
-    fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 8,
-  },
+  title: { textAlign: "center", marginBottom: Spacing.md },
+  description: { fontSize: 16, textAlign: "center", lineHeight: 24, paddingHorizontal: Spacing.sm },
   dotsRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 28,
+    gap: Spacing.sm - 2,
+    marginBottom: Spacing.xxl + 4,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#E5E7EB",
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: "#2B7FFF",
-  },
-  btnWrap: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
-  signInLink: { alignItems: "center", paddingVertical: 4 },
-  signInText: { color: "#6B7280", fontSize: 14 },
-  signInBold: { color: "#2B7FFF", fontWeight: "700" },
+  dot: { width: 8, height: 8, borderRadius: Radius.full },
+  btnWrap: { paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xxl, gap: Spacing.md },
+  signInLink: { alignItems: "center", paddingVertical: Spacing.xs },
 });

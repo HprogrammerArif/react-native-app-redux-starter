@@ -1,19 +1,25 @@
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { useTheme } from "@/hooks/use-theme";
 
 /**
  * Tab Navigator — 4 tabs: Home, Explore, Notifications, Profile
  * All screens inside (app)/(tabs)/ are automatically auth-protected by the parent (app)/_layout.tsx
  */
 export default function TabLayout() {
+  const theme = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          { backgroundColor: theme.surface, borderTopColor: theme.border, shadowColor: theme.text },
+        ],
         tabBarItemStyle: styles.tabItem,
       }}
     >
@@ -82,11 +88,8 @@ const styles = StyleSheet.create({
     height: Platform.OS === "ios" ? 88 : 68,
     paddingBottom: Platform.OS === "ios" ? 24 : 8,
     paddingTop: 10,
-    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
     elevation: 8,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,

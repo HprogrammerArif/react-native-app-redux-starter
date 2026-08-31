@@ -2,6 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "@/hooks/use-theme";
+import { Radius, Spacing } from "@/constants/theme";
 
 interface ScreenHeaderProps {
   title: string;
@@ -21,6 +23,7 @@ export function ScreenHeader({
   onBackPress,
 }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   const handleBack = () => {
     if (onBackPress) {
@@ -31,17 +34,34 @@ export function ScreenHeader({
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top + Spacing.sm,
+          backgroundColor: theme.surface,
+          borderBottomColor: theme.border,
+        },
+      ]}
+    >
       <View style={styles.row}>
         {showBack ? (
-          <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={24} color="#111827" />
+          <TouchableOpacity
+            style={[styles.backBtn, { backgroundColor: theme.surfaceSecondary }]}
+            onPress={handleBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={24} color={theme.text} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
         )}
 
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
+          {title}
+        </Text>
 
         {rightComponent ? (
           <View style={styles.rightSlot}>{rightComponent}</View>
@@ -55,11 +75,9 @@ export function ScreenHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    paddingBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
   },
   row: {
     flexDirection: "row",
@@ -69,8 +87,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    backgroundColor: "#F3F4F6",
+    borderRadius: Radius.sm,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -79,7 +96,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#111827",
   },
   rightSlot: { width: 36, alignItems: "flex-end" },
   placeholder: { width: 36 },

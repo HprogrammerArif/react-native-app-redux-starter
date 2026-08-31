@@ -14,7 +14,8 @@ export default function OfflineBanner() {
   const { isConnected } = useNetworkStatus();
   const [visible, setVisible] = useState(false);
   const [showingOnline, setShowingOnline] = useState(false);
-  const translateY = useRef(new Animated.Value(-BANNER_HEIGHT - 40)).current;
+  // Lazy useState (not useRef().current) so the stable Animated.Value isn't read during render.
+  const [translateY] = useState(() => new Animated.Value(-BANNER_HEIGHT - 40));
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
 
@@ -39,6 +40,9 @@ export default function OfflineBanner() {
     if (hideTimer.current) clearTimeout(hideTimer.current);
 
     if (!isConnected) {
+      // Driven by a real external signal (network status), not derivable during render —
+      // also kicks off the slide-in animation, so it belongs in an effect.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowingOnline(false);
       setVisible(true);
       slideIn();
@@ -71,9 +75,7 @@ export default function OfflineBanner() {
     >
       <View style={styles.row}>
         <Text style={styles.icon}>{showingOnline ? "✓" : "⚠"}</Text>
-        <Text style={styles.text}>
-          {showingOnline ? "Back online" : "No internet connection"}
-        </Text>
+        <Text style={styles.text}>{showingOnline ? "Back online" : "No internet connection"}</Text>
       </View>
     </Animated.View>
   );

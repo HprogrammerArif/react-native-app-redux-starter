@@ -333,7 +333,7 @@ try {
   analyticsService.logError(
     "operation_failed",
     error.message,
-    false // not fatal
+    false, // not fatal
   );
 }
 ```

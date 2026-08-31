@@ -14,6 +14,7 @@ npx expo install <package-name>
 ```
 
 **NEVER use:**
+
 - `npm install <package-name>`
 - `yarn add <package-name>`
 - `pnpm add <package-name>`

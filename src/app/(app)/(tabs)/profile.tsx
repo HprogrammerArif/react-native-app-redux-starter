@@ -3,11 +3,13 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { Card } from "@/components/ui";
+import { useTheme } from "@/hooks/use-theme";
+import { Radius, Spacing, Typography } from "@/constants/theme";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { logout, selectCurrentUser } from "@/redux/features/auth/authSlice";
+import { logout, selectCurrentUser, TUser } from "@/redux/features/auth/authSlice";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function getInitials(user: { first_name?: string; last_name?: string; username?: string; email?: string } | null): string {
+function getInitials(user: TUser | null): string {
   if (!user) return "?";
   if (user.first_name && user.last_name) {
     return (user.first_name[0] + user.last_name[0]).toUpperCase();
@@ -18,15 +20,14 @@ function getInitials(user: { first_name?: string; last_name?: string; username?:
   return "?";
 }
 
-function getDisplayName(user: { first_name?: string; last_name?: string; username?: string; email?: string } | null): string {
+function getDisplayName(user: TUser | null): string {
   if (!user) return "User";
   const full = [user.first_name, user.last_name].filter(Boolean).join(" ");
   return full || user.username || user.email?.split("@")[0] || "User";
 }
 
-// ─── List item ──────────────────────────────────────────────────────────────
 interface ListItemProps {
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Ionicons>["name"];
   label: string;
   onPress: () => void;
   iconBg?: string;
@@ -35,20 +36,29 @@ interface ListItemProps {
   danger?: boolean;
 }
 
-function ListItem({ icon, label, onPress, iconBg = "#F3F4F6", iconColor = "#374151", rightComponent, danger }: ListItemProps) {
+function ListItem({
+  icon,
+  label,
+  onPress,
+  iconBg,
+  iconColor,
+  rightComponent,
+  danger,
+}: ListItemProps) {
+  const theme = useTheme();
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.listIcon, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={20} color={danger ? "#EF4444" : iconColor} />
+      <View style={[styles.listIcon, { backgroundColor: iconBg ?? theme.surfaceSecondary }]}>
+        <Ionicons name={icon} size={20} color={danger ? theme.danger : (iconColor ?? theme.text)} />
       </View>
-      <Text style={[styles.listLabel, danger && styles.listLabelDanger]}>{label}</Text>
-      {rightComponent ?? <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />}
+      <Text style={[styles.listLabel, { color: danger ? theme.danger : theme.text }]}>{label}</Text>
+      {rightComponent ?? <Ionicons name="chevron-forward" size={18} color={theme.textTertiary} />}
     </TouchableOpacity>
   );
 }
 
-// ─── Screen ─────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser);
   const initials = getInitials(user);
@@ -69,87 +79,140 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-
-        {/* Avatar + name */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <Text style={styles.displayName}>{displayName}</Text>
-          {user?.email && <Text style={styles.email}>{user.email}</Text>}
-          <TouchableOpacity style={styles.editBtn}>
-            <Text style={styles.editBtnText}>Edit Profile</Text>
+          <Text style={[Typography.h2, { color: theme.text }]}>{displayName}</Text>
+          {user?.email && (
+            <Text style={[styles.email, { color: theme.textSecondary }]}>{user.email}</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.editBtn, { borderColor: theme.border }]}
+            onPress={() => router.push("/edit-profile")}
+          >
+            <Text style={[styles.editBtnText, { color: theme.text }]}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Account section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Account</Text>
-          <View style={styles.card}>
-            <ListItem icon="person-outline" label="Personal Information" onPress={() => {}} iconBg="#EFF6FF" iconColor="#2B7FFF" />
-            <View style={styles.divider} />
+          <Text style={[styles.sectionLabel, { color: theme.textTertiary }]}>Account</Text>
+          <Card padded={false}>
+            <ListItem
+              icon="person-outline"
+              label="Personal Information"
+              onPress={() => router.push("/edit-profile")}
+              iconBg={theme.accentMuted}
+              iconColor={theme.accent}
+            />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <ListItem icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <ListItem icon="mail-outline" label="Email Preferences" onPress={() => {}} />
-          </View>
+          </Card>
         </View>
 
-        {/* App section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>App</Text>
-          <View style={styles.card}>
-            <ListItem icon="notifications-outline" label="Notifications" onPress={() => {}} iconBg="#FFF7ED" iconColor="#F97316" />
-            <View style={styles.divider} />
-            <ListItem icon="star-outline" label="Subscription" onPress={() => {}} iconBg="#FEFCE8" iconColor="#EAB308" />
-            <View style={styles.divider} />
-            <ListItem icon="shield-checkmark-outline" label="Privacy & Security" onPress={() => {}} />
-          </View>
+          <Text style={[styles.sectionLabel, { color: theme.textTertiary }]}>App</Text>
+          <Card padded={false}>
+            <ListItem
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => {}}
+              iconBg={theme.warningMuted}
+              iconColor={theme.warning}
+            />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <ListItem
+              icon="star-outline"
+              label="Subscription"
+              onPress={() => {}}
+              iconBg={theme.warningMuted}
+              iconColor={theme.warning}
+            />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <ListItem
+              icon="shield-checkmark-outline"
+              label="Privacy & Security"
+              onPress={() => {}}
+            />
+          </Card>
         </View>
 
-        {/* Support section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Support</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionLabel, { color: theme.textTertiary }]}>Support</Text>
+          <Card padded={false}>
             <ListItem icon="help-circle-outline" label="Help Center" onPress={() => {}} />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <ListItem icon="document-text-outline" label="Terms & Privacy" onPress={() => {}} />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <ListItem icon="information-circle-outline" label="About" onPress={() => {}} />
-          </View>
+          </Card>
         </View>
 
-        {/* Logout */}
         <View style={styles.section}>
-          <View style={styles.card}>
+          <Card padded={false}>
             <ListItem icon="log-out-outline" label="Sign Out" onPress={handleLogout} danger />
-          </View>
+          </Card>
         </View>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={[styles.version, { color: theme.textTertiary }]}>Version 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F9FAFB" },
-  container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
-  avatarSection: { alignItems: "center", marginBottom: 28 },
-  avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: "#2B7FFF", alignItems: "center", justifyContent: "center", marginBottom: 12 },
+  safe: { flex: 1 },
+  container: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.huge - 8,
+  },
+  avatarSection: { alignItems: "center", marginBottom: Spacing.xxl + 4 },
+  avatar: {
+    width: 88,
+    height: 88,
+    borderRadius: Radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+  },
   avatarText: { color: "#fff", fontSize: 32, fontWeight: "800" },
-  displayName: { fontSize: 22, fontWeight: "800", color: "#111827", marginBottom: 2 },
-  email: { fontSize: 14, color: "#6B7280", marginBottom: 12 },
-  editBtn: { paddingHorizontal: 24, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: "#E5E7EB" },
-  editBtnText: { fontSize: 14, fontWeight: "600", color: "#374151" },
-  section: { marginBottom: 14 },
-  sectionLabel: { fontSize: 12, fontWeight: "700", color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, marginLeft: 4 },
-  card: { backgroundColor: "#fff", borderRadius: 16, overflow: "hidden", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
-  listItem: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
-  listIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  listLabel: { flex: 1, fontSize: 15, fontWeight: "500", color: "#111827" },
-  listLabelDanger: { color: "#EF4444" },
-  divider: { height: 1, backgroundColor: "#F3F4F6", marginLeft: 64 },
-  version: { textAlign: "center", color: "#D1D5DB", fontSize: 12, marginTop: 8 },
+  email: { fontSize: 14, marginBottom: Spacing.md },
+  editBtn: {
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+  },
+  editBtnText: { fontSize: 14, fontWeight: "600" },
+  section: { marginBottom: Spacing.md + 2 },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.xs,
+  },
+  listItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 2,
+    gap: Spacing.md,
+  },
+  listIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  listLabel: { flex: 1, fontSize: 15, fontWeight: "500" },
+  divider: { height: 1, marginLeft: 64 },
+  version: { textAlign: "center", fontSize: 12, marginTop: Spacing.sm },
 });

@@ -4,40 +4,11 @@
     "strict": true,
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
+    "types": ["jest"],
     "paths": {
-      "@/*": [
-        "./src/*",
-        "./*"
-      ],
-      "@/assets/*": [
-        "./assets/*"
-      ],
-      "@/redux/*": [
-        "./redux/*"
-      ],
-      "@/lib/*": [
-        "./lib/*"
-      ],
-      "@/hooks/*": [
-        "./hooks/*",
-        "./src/hooks/*"
-      ],
-      "@/services/*": [
-        "./services/*"
-      ],
-      "@/constants/*": [
-        "./src/constants/*"
-      ],
-      "@/components/*": [
-        "./src/components/*"
-      ]
+      "@/*": ["./src/*"],
+      "@/assets/*": ["./assets/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "nativewind-env.d.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }

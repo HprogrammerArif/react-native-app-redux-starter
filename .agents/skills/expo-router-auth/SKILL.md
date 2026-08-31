@@ -36,9 +36,17 @@ return <Slot />;
 
 ```ts
 // 1. Dispatch credentials to Redux
-dispatch(setCredentials({
-  user, role, token, refreshToken, isAddChild, isSendInvite, device_token
-}));
+dispatch(
+  setCredentials({
+    user,
+    role,
+    token,
+    refreshToken,
+    isAddChild,
+    isSendInvite,
+    device_token,
+  }),
+);
 
 // 2. Navigate to app (replace so back button doesn't go back to login)
 router.replace("/(app)");

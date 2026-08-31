@@ -92,11 +92,11 @@ Replace `FlatList` with Shopify's **`FlashList`**. It runs on the UI thread and 
 
 ## 🎨 4. Styling & UI
 
-### 💅 NativeWind (Tailwind CSS)
+### 💅 StyleSheet + theme tokens
 
-Since you have it installed, use it! It simplifies styling significantly.
-
-- _Trick:_ Use `clsx` or `cn` helper to conditionally merge classes.
+This project uses `StyleSheet.create` with tokens from `src/constants/theme.ts` (`Colors` via
+`useTheme()`, `Spacing`, `Radius`, `Typography`) — not NativeWind/Tailwind. Reuse the shared
+components in `src/components/ui/` instead of hand-rolling styles per screen.
 
 ### 📱 Safe Areas
 
@@ -110,8 +110,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 ### ⌨️ Keyboard Handling
 
-- Use `KeyboardAvoidingView` creates issues on Android + Expo Router often.
-- **Better**: Use `react-native-keyboard-controller` (you have this!). It gives you fully synchronous keyboard animations.
+- The shared `Screen` component (`src/components/ui/Screen.tsx`) already wraps content in
+  `KeyboardAvoidingView` — use it instead of adding your own per screen.
+- If you hit persistent Android keyboard issues, consider `react-native-keyboard-controller` (not
+  currently installed) for fully synchronous keyboard animations.
 
 ---
 

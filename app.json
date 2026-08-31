@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.rakibhasan2.reactnativestarter"
+      "package": "com.example.reactnativestarter"
     },
     "web": {
       "bundler": "metro",
@@ -46,7 +46,9 @@
           "defaultChannel": "default"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
